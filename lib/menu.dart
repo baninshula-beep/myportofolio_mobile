@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 
+
+
+/// The main page of the MyPortfolio Mobile application.
+///
+/// Displays the owner's profile information through InfoCard widgets
+/// and provides portfolio-related actions using ItemCard widgets.
+
 class MyHomePage extends StatelessWidget {
   MyHomePage({super.key});
 
@@ -71,6 +78,11 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
+
+/// A reusable card for displaying a piece of profile information.
+///
+/// Each card receives a title and content, allowing the same
+/// component to display the owner's NPM, name, and class.
 class InfoCard extends StatelessWidget {
   final String title;
   final String content;
@@ -96,6 +108,13 @@ class InfoCard extends StatelessWidget {
   }
 }
 
+
+/// Represents a single action item displayed on the homepage.
+///
+/// Stores the information required to render an ItemCard,
+/// including its label, icon, and background color.
+/// Keeping the presentation data in this model avoids
+/// repetitive conditional statements when styling each card.
 class ItemHomepage {
   final String name;
   final IconData icon;
@@ -104,6 +123,12 @@ class ItemHomepage {
   ItemHomepage(this.name, this.icon, this.color);
 }
 
+
+/// A reusable interactive card representing a homepage action.
+///
+/// Uses the ItemHomepage model to determine its label, icon,
+/// and background color. When tapped, it displays a SnackBar
+/// containing the name of the selected action.
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
 
@@ -116,6 +141,9 @@ class ItemCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () {
+
+          // Replace any currently displayed SnackBar so that
+          // the latest button interaction is immediately visible.
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
