@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-
-
+import 'package:myportofolio_mobile/widgets/left_drawer.dart';
+import 'package:myportofolio_mobile/widgets/project_card.dart';
 
 /// The main page of the MyPortfolio Mobile application.
 ///
 /// Displays the owner's profile information through InfoCard widgets
 /// and provides portfolio-related actions using ItemCard widgets.
-
 class MyHomePage extends StatelessWidget {
   MyHomePage({super.key});
 
@@ -29,7 +28,9 @@ class MyHomePage extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
+      drawer: const LeftDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -78,7 +79,6 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
-
 /// A reusable card for displaying a piece of profile information.
 ///
 /// Each card receives a title and content, allowing the same
@@ -108,7 +108,6 @@ class InfoCard extends StatelessWidget {
   }
 }
 
-
 /// Represents a single action item displayed on the homepage.
 ///
 /// Stores the information required to render an ItemCard,
@@ -121,55 +120,4 @@ class ItemHomepage {
   final Color color;
 
   ItemHomepage(this.name, this.icon, this.color);
-}
-
-
-/// A reusable interactive card representing a homepage action.
-///
-/// Uses the ItemHomepage model to determine its label, icon,
-/// and background color. When tapped, it displays a SnackBar
-/// containing the name of the selected action.
-class ItemCard extends StatelessWidget {
-  final ItemHomepage item;
-
-  const ItemCard(this.item, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: item.color,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: () {
-
-          // Replace any currently displayed SnackBar so that
-          // the latest button interaction is immediately visible.
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text("Kamu telah menekan tombol ${item.name}!"),
-              ),
-            );
-        },
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(item.icon, color: Colors.white, size: 30.0),
-                const Padding(padding: EdgeInsets.all(3)),
-                Text(
-                  item.name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
