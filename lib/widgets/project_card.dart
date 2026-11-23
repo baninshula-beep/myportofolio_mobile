@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:myportofolio_mobile/screens/menu.dart';
 import 'package:myportofolio_mobile/screens/project_form.dart';
+import 'package:myportofolio_mobile/screens/education_form.dart';
 
 /// A reusable interactive card representing a homepage action.
 ///
 /// Uses the ItemHomepage model to determine its label, icon,
 /// and background color. When tapped, it displays a SnackBar
 /// containing the name of the selected action, and navigates
-/// to ProjectFormPage if "Tambah Proyek" is selected.
+/// to ProjectFormPage or EducationFormPage when their respective card is selected.
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
 
@@ -20,8 +21,8 @@ class ItemCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () {
-          // Replace any currently displayed SnackBar so that
-          // the latest button interaction is immediately visible.
+          // Menampilkan feedback interaksi menggunakan SnackBar.
+          // hideCurrentSnackBar() dipanggil agar interaksi tombol terbaru langsung terlihat.
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
@@ -30,12 +31,22 @@ class ItemCard extends StatelessWidget {
               ),
             );
 
-          // Navigate ke halaman yang sesuai
+          // Navigasi ke halaman form yang sesuai dengan tombol yang ditekan.
+          // Menggunakan Navigator.push() dengan MaterialPageRoute agar rute baru
+          // ditumpuk di atas stack navigasi sehingga pengguna dapat kembali ke
+          // homepage menggunakan tombol Back sistem pada perangkat atau browser.
           if (item.name == "Tambah Proyek") {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const ProjectFormPage(),
+              ),
+            );
+          } else if (item.name == "Add Education") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const EducationFormPage(),
               ),
             );
           }
