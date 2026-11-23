@@ -119,6 +119,102 @@ https://chatgpt.com/share/6afb0b3e-9508-83ec-be6a-d88837e267fd
 
 
 
+
+
+### Tugas 8
+
+**1. Jelaskan perbedaan antara `Navigator.push()`, `Navigator.pushReplacement()`, dan `Navigator.pop()`. Kapan masing-masing metode digunakan dalam proyek ini?**
+
+Ketiga metode tersebut digunakan untuk mengatur perpindahan halaman atau route dalam aplikasi Flutter.
+
+- `Navigator.push()` digunakan untuk membuka halaman baru di atas halaman yang sedang aktif tanpa menghapus halaman sebelumnya dari navigation stack. Dengan demikian, pengguna dapat kembali ke halaman sebelumnya menggunakan tombol Back.
+- `Navigator.pushReplacement()` digunakan untuk membuka halaman baru sekaligus menggantikan halaman yang sedang aktif. Halaman sebelumnya tidak lagi menjadi bagian dari navigation stack.
+- `Navigator.pop()` digunakan untuk menutup halaman atau route yang sedang aktif dan kembali ke halaman sebelumnya. Metode ini juga dapat digunakan untuk menutup dialog.
+
+Dalam proyek MyPortfolio Mobile, `Navigator.push()` digunakan ketika pengguna menekan card Add Education pada homepage. Dengan demikian, setelah membuka EducationFormPage, pengguna dapat kembali ke homepage melalui tombol Back.
+
+Sementara itu, `Navigator.pushReplacement()` digunakan pada menu Add Education di Drawer. Metode ini menggantikan halaman yang sedang aktif dengan EducationFormPage. `Navigator.pop()` digunakan ketika pengguna menekan tombol OK pada AlertDialog untuk menutup dialog ringkasan data pendidikan.
+
+**2. Jelaskan fungsi widget `Scaffold`, `AppBar`, dan `Drawer` dalam membangun struktur halaman Flutter. Bagaimana ketiganya digunakan dalam proyek ini?**
+
+`Scaffold` merupakan widget yang menyediakan struktur dasar halaman aplikasi berbasis Material Design. Scaffold menyediakan beberapa bagian seperti AppBar, Drawer, dan body sehingga tampilan halaman dapat disusun secara terorganisasi.
+
+`AppBar` merupakan bagian yang ditampilkan di atas halaman. Widget ini biasanya digunakan untuk menampilkan judul halaman serta menyediakan area untuk tindakan atau navigasi.
+
+`Drawer` merupakan panel navigasi yang dapat dibuka dari sisi layar. Drawer umumnya berisi pilihan menu yang membantu pengguna berpindah ke halaman lain dalam aplikasi.
+
+Dalam proyek MyPortfolio Mobile, ketiga widget tersebut digunakan pada halaman homepage maupun EducationFormPage. Scaffold menjadi struktur utama setiap halaman, AppBar menampilkan judul halaman, sedangkan Drawer menyediakan navigasi menuju Home, Add Project, dan Add Education.
+
+Dengan menggunakan struktur tersebut, tampilan dan navigasi aplikasi menjadi lebih konsisten serta memudahkan pengguna mengakses fitur yang tersedia.
+
+**3. Jelaskan widget layout yang digunakan dalam form. Bagaimana widget tersebut mengatur posisi dan jarak elemen, serta bagaimana `SingleChildScrollView` membantu tampilan menyesuaikan ukuran layar dan keyboard?**
+
+Widget layout digunakan untuk mengatur posisi, ukuran, jarak, dan susunan elemen pada halaman Flutter.
+
+Dalam EducationFormPage, beberapa widget layout yang digunakan adalah:
+
+- `Column`: menyusun elemen formulir secara vertikal dari atas ke bawah.
+- `Padding`: memberikan jarak antara elemen formulir dengan batas area di sekitarnya.
+- `Align`: mengatur posisi tombol Save agar berada di bagian tengah bawah area formulir.
+- `SingleChildScrollView`: memungkinkan seluruh konten formulir digulir secara vertikal.
+
+Penggunaan `SingleChildScrollView` penting karena formulir terdiri dari beberapa input yang membutuhkan ruang cukup besar. Ketika keyboard muncul atau aplikasi dibuka pada perangkat dengan ukuran layar lebih kecil, sebagian konten mungkin tidak dapat ditampilkan sekaligus.
+
+Dengan adanya kemampuan scrolling, pengguna tetap dapat mengakses seluruh field dan tombol Save tanpa mengalami masalah tampilan seperti overflow. Hal ini membuat formulir lebih fleksibel digunakan pada berbagai ukuran layar.
+
+**4. Jelaskan fungsi `GlobalKey<FormState>`, `FormState`, `validator`, dan `validate()` dalam validasi form. Mengapa penggunaan `keyboardType: TextInputType.number` saja belum cukup untuk memastikan input tahun kelulusan valid?**
+
+Dalam Flutter, validasi form dilakukan untuk memastikan data yang dimasukkan pengguna memenuhi ketentuan sebelum diproses lebih lanjut.
+
+`GlobalKey<FormState>` digunakan untuk mengidentifikasi widget Form secara unik dan memberikan akses kepada FormState. Melalui key tersebut, aplikasi dapat menjalankan proses validasi maupun reset terhadap seluruh field di dalam Form.
+
+`FormState` merupakan state yang dikelola oleh widget Form. Salah satu metode yang dimilikinya adalah `validate()`, yang menjalankan seluruh fungsi validator pada field yang berada di dalam Form. Jika semua field lolos validasi, metode tersebut mengembalikan nilai `true`. Sebaliknya, jika terdapat field yang tidak memenuhi ketentuan, metode tersebut mengembalikan nilai `false` dan menampilkan pesan kesalahan pada field terkait.
+
+`validator` merupakan fungsi yang digunakan untuk menentukan aturan validasi setiap input. Fungsi ini mengembalikan pesan kesalahan apabila input tidak memenuhi ketentuan atau `null` apabila input dinyatakan valid.
+
+Dalam EducationFormPage, validasi diterapkan pada beberapa field. Institution dan Major wajib diisi dengan batas maksimal 100 karakter. Graduation Year wajib diisi dan harus terdiri dari tepat empat digit angka. Sementara itu, Description bersifat opsional dengan batas maksimal 500 karakter.
+
+Penggunaan `keyboardType: TextInputType.number` saja belum cukup untuk memastikan input tahun kelulusan valid. Properti tersebut hanya mengatur jenis keyboard yang ditampilkan kepada pengguna, bukan membatasi atau memvalidasi data yang dimasukkan. Pengguna masih dapat memasukkan data yang tidak sesuai melalui metode input lainnya.
+
+Oleh karena itu, diperlukan validator tambahan untuk memeriksa apakah input tidak kosong, dapat dikonversi menjadi angka, dan memiliki tepat empat digit. Dengan demikian, aplikasi dapat memastikan data memenuhi aturan sebelum menampilkan AlertDialog yang berisi ringkasan informasi pendidikan.
+
+### AI Usage Disclosure
+
+Dalam pengerjaan Individual Assignment 8 ini, saya menggunakan ChatGPT dan Antigravity sebagai alat bantu dalam proses pembelajaran dan pengembangan aplikasi Flutter. Penggunaan AI dilakukan untuk membantu memahami requirement, mempelajari konsep, mengimplementasikan fitur, menganalisis kode, serta mengevaluasi hasil pengerjaan.
+
+#### Strategi Penggunaan AI
+
+Saya menggunakan pendekatan bertahap dengan memberikan instruksi tugas, struktur project, potongan kode, dan hasil pengujian kepada AI. Strategi yang digunakan meliputi:
+
+- Memberikan requirement IA8 untuk membantu mengidentifikasi fitur dan ketentuan yang harus dipenuhi.
+- Meminta ChatGPT menjelaskan konsep Flutter Navigation, layout, form, dan input elements dengan contoh yang relevan dengan project.
+- Meminta ChatGPT membantu menyusun tahapan implementasi agar perubahan dapat dilakukan secara terstruktur.
+- Menggunakan Antigravity untuk memeriksa struktur project dan membantu mengimplementasikan perubahan kode berdasarkan instruksi yang diberikan.
+- Memberikan output terminal dan kode kepada ChatGPT untuk memperoleh evaluasi serta mengidentifikasi potensi masalah.
+- Meminta bantuan AI dalam menyusun dokumentasi dan jawaban refleksi berdasarkan implementasi aktual.
+
+#### Bagian yang Dibantu oleh AI
+
+ChatGPT digunakan untuk membantu memahami requirement IA8, menjelaskan konsep `Navigator`, `Scaffold`, `AppBar`, `Drawer`, widget layout, `Form`, `GlobalKey<FormState>`, dan validasi input. ChatGPT juga membantu mengevaluasi implementasi kode, menjelaskan fungsi setiap bagian, serta menyusun dokumentasi refleksi.
+
+Antigravity digunakan untuk membantu memeriksa struktur project, mengimplementasikan EducationFormPage, mengintegrasikan navigasi Education pada homepage dan Drawer, serta menjalankan pemeriksaan menggunakan `flutter analyze`.
+
+#### Evaluasi dan Verifikasi Mandiri
+
+Saran dan perubahan kode yang dihasilkan AI tidak langsung diterima tanpa pemeriksaan. Saya mempelajari kembali implementasi yang dibuat, meninjau perubahan pada setiap file, dan memastikan bahwa fitur yang ditambahkan sesuai dengan requirement tugas.
+
+Saya juga melakukan pengujian secara manual melalui Chrome, termasuk menguji navigasi dari homepage dan Drawer, validasi input kosong maupun tidak sesuai, pengiriman data yang valid, serta tampilan AlertDialog dan proses reset formulir. Selain itu, saya menjalankan `flutter analyze` untuk memeriksa kualitas kode dan memastikan tidak ditemukan issues.
+
+Melalui proses ini, saya memahami bahwa AI dapat membantu mempercepat proses pembelajaran dan pengembangan, tetapi hasil yang diberikan tetap perlu diperiksa dan diverifikasi. Keputusan implementasi, pemahaman terhadap kode, pengujian, serta tanggung jawab atas hasil akhir tetap berada pada saya.
+
+#### AI Conversation Log
+
+Dokumentasi percakapan yang digunakan sebagai bantuan selama pengerjaan tugas:
+
+https://chatgpt.com/share/6b03fbda-7cec-83ec-8836-4082f4ee5a23
+
+
+
 # myportofolio_mobile
 
 A new Flutter project.
