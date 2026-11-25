@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:myportofolio_mobile/models/education.dart';
+import 'package:myportofolio_mobile/screens/education_list_screen.dart';
+import 'package:myportofolio_mobile/services/api_client.dart';
+import 'package:myportofolio_mobile/services/auth_state.dart';
+import 'package:myportofolio_mobile/widgets/auth_guard.dart';
 import 'package:myportofolio_mobile/widgets/left_drawer.dart';
+import 'package:provider/provider.dart';
 
-/// Halaman formulir untuk menambahkan data riwayat pendidikan baru.
-/// Menggunakan StatefulWidget untuk mengelola status validasi formulir,
-/// interaksi input pengguna, dan siklus hidup pembersihan state.
+/// Halaman formulir untuk menambahkan data riwayat pendidikan baru ke backend DRF.
 class EducationFormPage extends StatefulWidget {
   const EducationFormPage({super.key});
 
@@ -12,49 +16,145 @@ class EducationFormPage extends StatefulWidget {
 }
 
 class _EducationFormPageState extends State<EducationFormPage> {
-  // GlobalKey<FormState> digunakan untuk mengidentifikasi widget Form secara unik
-  // dan memberikan akses ke objek FormState untuk menjalankan validasi (validate())
-  // serta mengembalikan kondisi form ke awal (reset()).
   final _formKey = GlobalKey<FormState>();
 
-  // Variabel penampung nilai input formulir.
-  // Nilai disimpan langsung melalui callback onChanged tanpa setState()
-  // untuk menghindari rebuild widget tree yang tidak diperlukan pada setiap ketikan tombol.
-  String _institution = "";
-  String _degree = "Sarjana (S1)"; // Nilai default dropdown
-  String _major = "";
-  String _graduationYear = "";
-  String _description = "";
+  String _institution = '';
+  String _degree = '';
+  String _year = '';
+  String _graduationYear = '';
+  bool _isSubmitting = false;
 
-  // Opsi pilihan jenjang pendidikan untuk widget DropdownButtonFormField.
-  final List<String> _degrees = [
-    'SMA/SMK',
-    'Diploma (D3/D4)',
-    'Sarjana (S1)',
-    'Magister (S2)',
-    'Doktor (S3)',
-    'Lainnya',
-  ];
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final allowed = await ensureLoggedIn(context);
+    if (!mounted || !allowed) {
+      return;
+    }
+
+    final authState = context.read<AuthState>();
+    final token = authState.token;
+    if (token == null || token.isEmpty) {
+      return;
+    }
+
+    final trimmedGradYear = _graduationYear.trim();
+    final int? parsedGradYear = trimmedGradYear.isEmpty
+        ? null
+        : int.parse(trimmedGradYear);
+
+    final newEducation = Education(
+      institution: _institution.trim(),
+      degree: _degree.trim(),
+      year: _year.trim(),
+      graduationYear: parsedGradYear,
+    );
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final created = await context.read<ApiClient>().createEducation(
+        newEducation,
+        token: token,
+      );
+      if (!mounted) {
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Edukasi berhasil ditambahkan!'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Institusi: ${created.institution}'),
+                  Text('Gelar / Prodi: ${created.degree}'),
+                  Text('Tahun / Periode: ${created.year}'),
+                  Text(
+                    'Tahun Kelulusan: ${created.graduationYear?.toString() ?? '-'}',
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                },
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const EducationListScreen()),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      if (error.statusCode == 401) {
+        await authState.logout();
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Sesi login berakhir atau token tidak valid. Silakan login ulang.',
+              ),
+            ),
+          );
+        return;
+      }
+
+      final message = error.statusCode == 403
+          ? 'Akses ditolak: hanya pemilik portofolio (superuser) yang dapat menambah data.'
+          : 'Gagal menyimpan edukasi: ${error.message}';
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(
-          child: Text(
-            'Add Education Form',
-          ),
-        ),
+        title: const Center(child: Text('Add Education Form')),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
       drawer: const LeftDrawer(),
       body: Form(
         key: _formKey,
-        // SingleChildScrollView digunakan agar seluruh konten formulir dapat digulir
-        // secara vertikal saat keyboard virtual tampil atau pada perangkat berlayar sempit,
-        // sehingga mencegah terjadinya error RenderFlex overflow.
         child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -64,136 +164,107 @@ class _EducationFormPageState extends State<EducationFormPage> {
                 child: TextFormField(
                   maxLength: 100,
                   decoration: InputDecoration(
-                    hintText: "Nama Institusi / Universitas",
-                    labelText: "Nama Institusi",
+                    hintText: 'Contoh: Universitas Indonesia',
+                    labelText: 'Nama Institusi',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
-                  onChanged: (String? value) {
-                    _institution = value ?? "";
+                  onChanged: (String value) {
+                    _institution = value;
                   },
-                  // Validator memeriksa keberadaan nilai (wajib diisi, tolak spasi kosong)
-                  // serta memastikan panjang teks tidak melampaui batas wajar 100 karakter.
                   validator: (String? value) {
                     if (value == null || value.trim().isEmpty) {
-                      return "Nama institusi tidak boleh kosong!";
+                      return 'Nama institusi tidak boleh kosong!';
                     }
                     if (value.trim().length > 100) {
-                      return "Nama institusi tidak boleh lebih dari 100 karakter!";
+                      return 'Nama institusi tidak boleh lebih dari 100 karakter!';
                     }
                     return null;
                   },
                 ),
               ),
 
-              // === Jenjang Pendidikan ===
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: "Jenjang Pendidikan",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
-                  initialValue: _degree,
-                  items: _degrees
-                      .map((degree) => DropdownMenuItem(
-                            value: degree,
-                            child: Text(degree),
-                          ))
-                      .toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      _degree = newValue;
-                    }
-                  },
-                ),
-              ),
-
-              // === Jurusan / Program Studi ===
+              // === Gelar / Program Studi ===
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   maxLength: 100,
                   decoration: InputDecoration(
-                    hintText: "Contoh: Ilmu Komputer, Sistem Informasi",
-                    labelText: "Jurusan / Program Studi",
+                    hintText: 'Contoh: S1 Sistem Informasi',
+                    labelText: 'Gelar / Program Studi',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
-                  onChanged: (String? value) {
-                    _major = value ?? "";
+                  onChanged: (String value) {
+                    _degree = value;
                   },
-                  // Validator memastikan jurusan wajib diisi dan memiliki panjang maksimal 100 karakter.
                   validator: (String? value) {
                     if (value == null || value.trim().isEmpty) {
-                      return "Jurusan tidak boleh kosong!";
+                      return 'Gelar / Program Studi tidak boleh kosong!';
                     }
                     if (value.trim().length > 100) {
-                      return "Jurusan tidak boleh lebih dari 100 karakter!";
+                      return 'Gelar / Program Studi tidak boleh lebih dari 100 karakter!';
                     }
                     return null;
                   },
                 ),
               ),
 
-              // === Tahun Kelulusan ===
+              // === Tahun / Periode ===
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(
+                  maxLength: 20,
+                  decoration: InputDecoration(
+                    hintText: 'Contoh: 2024 - Present',
+                    labelText: 'Tahun / Periode',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                  ),
+                  onChanged: (String value) {
+                    _year = value;
+                  },
+                  validator: (String? value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Tahun / Periode tidak boleh kosong!';
+                    }
+                    if (value.trim().length > 20) {
+                      return 'Tahun / Periode tidak boleh lebih dari 20 karakter!';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+
+              // === Tahun Kelulusan (Opsional) ===
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   maxLength: 4,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    hintText: "Contoh: 2026",
-                    labelText: "Tahun Kelulusan",
+                    hintText: 'Contoh: 2028 (opsional)',
+                    labelText: 'Tahun Kelulusan (Opsional)',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
-                  onChanged: (String? value) {
-                    _graduationYear = value ?? "";
+                  onChanged: (String value) {
+                    _graduationYear = value;
                   },
-                  // Validator memeriksa kelengkapan isian, memastikan format numerik murni,
-                  // serta mengharuskan input tepat 4 digit angka sebagai representasi tahun valid.
                   validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Tahun kelulusan tidak boleh kosong!";
+                    final trimmed = value?.trim() ?? '';
+                    if (trimmed.isEmpty) {
+                      return null;
                     }
-                    if (int.tryParse(value.trim()) == null) {
-                      return "Tahun kelulusan harus berupa angka!";
+                    if (int.tryParse(trimmed) == null) {
+                      return 'Tahun kelulusan harus berupa angka!';
                     }
-                    if (value.trim().length != 4) {
-                      return "Tahun kelulusan harus terdiri dari 4 digit angka!";
-                    }
-                    return null;
-                  },
-                ),
-              ),
-
-              // === Deskripsi / Capaian Akademik ===
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  maxLength: 500,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: "Deskripsi kegiatan, konsentrasi, atau fokus studi (opsional)",
-                    labelText: "Deskripsi",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
-                  onChanged: (String? value) {
-                    _description = value ?? "";
-                  },
-                  // Field ini bersifat opsional, namun validator menjaga agar panjang teks
-                  // tidak melebihi batas penyimpanan maksimal 500 karakter.
-                  validator: (String? value) {
-                    if (value != null && value.trim().length > 500) {
-                      return "Deskripsi tidak boleh lebih dari 500 karakter!";
+                    if (trimmed.length != 4) {
+                      return 'Tahun kelulusan harus terdiri dari 4 digit angka!';
                     }
                     return null;
                   },
@@ -207,62 +278,22 @@ class _EducationFormPageState extends State<EducationFormPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(
                     style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all(Colors.indigo),
+                      backgroundColor: WidgetStateProperty.all(Colors.indigo),
                     ),
-                    onPressed: () {
-                      // FormState.validate() menjalankan seluruh validator field di bawah Form.
-                      // Mengembalikan true hanya jika semua validator mengembalikan nilai null (lolos validasi).
-                      if (_formKey.currentState!.validate()) {
-                        // Jika validasi sukses, tampilkan AlertDialog sebagai ringkasan isian pengguna.
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Edukasi berhasil ditambahkan!'),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Institusi: $_institution'),
-                                    Text('Jenjang: $_degree'),
-                                    Text('Jurusan: $_major'),
-                                    Text('Tahun Kelulusan: $_graduationYear'),
-                                    Text('Deskripsi: ${_description.trim().isEmpty ? "-" : _description}'),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    // 1. Menutup dialog ringkasan
-                                    Navigator.pop(context);
-
-                                    // 2. Mengatur ulang tampilan input field pada Form widget
-                                    _formKey.currentState!.reset();
-
-                                    // 3. Mereset seluruh variabel penampung state ke nilai awal
-                                    //    agar pop-up berikutnya tidak menampilkan data residu lama.
-                                    setState(() {
-                                      _institution = "";
-                                      _degree = "Sarjana (S1)";
-                                      _major = "";
-                                      _graduationYear = "";
-                                      _description = "";
-                                    });
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
-                    },
-                    child: const Text(
-                      "Save",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    onPressed: _isSubmitting ? null : _submit,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 20.0,
+                            width: 20.0,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Save',
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
                 ),
               ),

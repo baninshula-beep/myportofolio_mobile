@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:myportofolio_mobile/screens/education_form.dart';
+import 'package:myportofolio_mobile/screens/education_list_screen.dart';
+import 'package:myportofolio_mobile/screens/login_screen.dart';
 import 'package:myportofolio_mobile/screens/menu.dart';
 import 'package:myportofolio_mobile/screens/project_form.dart';
-import 'package:myportofolio_mobile/screens/education_form.dart';
+import 'package:myportofolio_mobile/services/auth_state.dart';
+import 'package:myportofolio_mobile/widgets/auth_guard.dart';
+import 'package:provider/provider.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = context.watch<AuthState>().isLoggedIn;
+
     return Drawer(
       child: ListView(
         children: [
           const DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.indigo,
-            ),
+            decoration: BoxDecoration(color: Colors.indigo),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -29,10 +34,7 @@ class LeftDrawer extends StatelessWidget {
                 SizedBox(height: 10),
                 Text(
                   'Explore personal projects and experiences!',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 15, color: Colors.white),
                 ),
               ],
             ),
@@ -44,9 +46,7 @@ class LeftDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => MyHomePage(),
-                ),
+                MaterialPageRoute(builder: (context) => MyHomePage()),
               );
             },
           ),
@@ -64,10 +64,27 @@ class LeftDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.school),
+            title: const Text('Education'),
+            // Navigasi ke halaman daftar pendidikan dari REST API
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EducationListScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.school_outlined),
             title: const Text('Add Education'),
-            // Navigasi ke halaman tambah edukasi
-            onTap: () {
+            // Lindungi navigasi ke halaman tambah edukasi dengan Auth Guard
+            onTap: () async {
+              final allowed = await ensureLoggedIn(context);
+              if (!context.mounted || !allowed) {
+                return;
+              }
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -76,6 +93,37 @@ class LeftDrawer extends StatelessWidget {
               );
             },
           ),
+          const Divider(),
+          if (!isLoggedIn)
+            ListTile(
+              leading: const Icon(Icons.login),
+              title: const Text('Login'),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+            )
+          else
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout'),
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                await context.read<AuthState>().logout();
+                messenger
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(content: Text('Berhasil logout.')),
+                  );
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+            ),
         ],
       ),
     );
